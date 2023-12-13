@@ -3,6 +3,7 @@
 
 #include "../Public/GGAttributeSet.h"
 #include "GameplayEffectExtension.h"	// For:		const FGameplayEffectModCallbackData& Data
+#include "GGGameplayEffectContext.h"
 #include "Logging/StructuredLog.h"
 #include "Net/UnrealNetwork.h"			// Replication
 
@@ -208,6 +209,27 @@ void UGGAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 					}
 				}
 				bOutOfHealth = (GetHealth() <= 0.f);
+			}
+
+			if (OnDamageTaken.IsBound())
+			{
+				const FGameplayEffectContextHandle& ContextHandle = Data.EffectSpec.GetEffectContext();
+				AActor* InstigatingActor = ContextHandle.GetOriginalInstigator();
+				AActor* CausingActor     = ContextHandle.GetEffectCauser();
+
+				bool isCrit	 = false;
+				bool isLucky = false;
+				const FGGGameplayEffectContext* EffectContext =
+					static_cast<FGGGameplayEffectContext*>(Data.EffectSpec.GetContext().Get());
+				
+				if (EffectContext != nullptr)
+				{
+					isCrit = EffectContext->IsCriticalHit();
+					isLucky = EffectContext->IsLuckyHit();
+				}
+				OnDamageTaken.Broadcast(InstigatingActor, CausingActor,
+					Data.EffectSpec.CapturedSourceTags.GetSpecTags(),
+					Data.EvaluatedData.Magnitude, isCrit, isLucky);
 			}
 		}
 	}

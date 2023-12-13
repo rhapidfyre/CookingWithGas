@@ -18,7 +18,10 @@
 DECLARE_LOG_CATEGORY_EXTERN(LogCharacterBase, Log, All);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAttributeUpdated,
-	const FGameplayAttribute&, AttributeData, const float, NewValue);
+const FGameplayAttribute&, AttributeData, const float, NewValue);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDamageTaken,
+	const FGameplayTagContainer&, DamageTags, const float, TotalDamage);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHealthDepleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnArmorDepleted);
@@ -34,6 +37,7 @@ public:
 	UPROPERTY(BlueprintAssignable) FOnAttributeUpdated	OnAttributeUpdated;
 	UPROPERTY(BlueprintAssignable) FOnHealthDepleted	OnHealthDepleted;
 	UPROPERTY(BlueprintAssignable) FOnArmorDepleted		OnArmorDepleted;
+	UPROPERTY(BlueprintAssignable) FOnDamageTaken		OnDamage;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -119,6 +123,21 @@ protected:
 					  AActor* DamageCauser,
 					  const FGameplayEffectSpec& DamageSpec,
 					  float DamageMagnitude);
+	
+
+	// CPP function that triggers after out-of-armor has toggled true or false
+	// Internally calls OnOutOfArmor (Blueprint Event)
+	virtual void OnDamageTakenChanged(AActor* DamageInstigator,
+									 AActor* DamageCauser,
+									 const FGameplayTagContainer& DamageTags,
+									 float DamageMagnitude, bool isCritical, bool isLucky);
+
+	// Event to allow blueprints to implement their own logic when health has been changed
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDamageTaken(AActor* DamageInstigator,
+					  AActor* DamageCauser,
+					  const FGameplayTagContainer& DamageTags,
+					  float DamageMagnitude, bool isCritical, bool isLucky);
 	
 	// To add mapping context & set up game attribute listeners
 	virtual void BeginPlay() override;

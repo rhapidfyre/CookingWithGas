@@ -16,10 +16,19 @@
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 DECLARE_MULTICAST_DELEGATE_FourParams(FGGAttributeEvent,
-	AActor*,					//Effect Instigator (what called the effect)
-	AActor*,					//Effect Causer (what dun it)
-	const FGameplayEffectSpec&, //the effect spec
-	float						//Effect magnitude
+	AActor*,						// Effect Instigator (what called the effect)
+	AActor*,						// Effect Causer (what dun it)
+	const FGameplayEffectSpec&, 	// the effect spec
+	float							// Effect magnitude
+	);
+
+DECLARE_MULTICAST_DELEGATE_SixParams(FGGAttributeDamageEvent,
+	AActor*,						// Effect Instigator (what called the effect)
+	AActor*,						// Effect Causer (what dun it)
+	const FGameplayTagContainer&,	// Tag Container
+	float,							// Effect magnitude
+	bool,							// bIsCriticalHit
+	bool							// bIsLuckyHit
 	);
 
 /**
@@ -105,6 +114,7 @@ public:
 
 	mutable FGGAttributeEvent OnOutOfHealth; // Used to bind listeners for when health runs out
 	mutable FGGAttributeEvent OnOutOfArmor;  // Used to bind listeners for when armor runs out
+	mutable FGGAttributeDamageEvent OnDamageTaken; // Used to bind listeners for when health runs out
 	
 protected:
 

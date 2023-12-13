@@ -19,6 +19,10 @@ AGGDestructible::AGGDestructible()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
 	AttributeSet = CreateDefaultSubobject<UGGAttributeSet>("AttributeSet");
+	AttributeSet->Armor.SetBaseValue(0.f);
+	AttributeSet->Armor.SetCurrentValue(0.f);
+	AttributeSet->ArmorMax.SetBaseValue(0.f);
+	AttributeSet->ArmorMax.SetCurrentValue(0.f);
 }
 
 UAbilitySystemComponent* AGGDestructible::GetAbilitySystemComponent() const

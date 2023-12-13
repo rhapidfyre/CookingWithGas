@@ -3,6 +3,7 @@
 
 #include "GGEffectDamageCalc.h"
 #include "GGAttributeSet.h"
+#include "GGGameplayEffectContext.h"
 
 #include "Logging/StructuredLog.h"
 
@@ -61,8 +62,7 @@ void UGGEffectDamageCalc::Execute_Implementation(const FGameplayEffectCustomExec
 	
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
 		DamageStatics().InDamageDef, EvaluationParameters, InDamage);
-
-	FGameplayEffectSpec* MutableSpec = ExecutionParams.GetOwningSpecForPreExecuteMod();
+	
 	float CriticalChance	 = 0.f;
 	float CriticalMultiplier = 0.f;
 	float LuckyChance		 = 0.f;
@@ -82,13 +82,11 @@ void UGGEffectDamageCalc::Execute_Implementation(const FGameplayEffectCustomExec
 	// Multiply the damage if the hit was a critical hit
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
 		DamageStatics().CriticalMultiplierDef, EvaluationParameters, CriticalMultiplier);
+	
+	bool isCritical = FMath::RandRange(0.01f, 100.f) <= CriticalChance;
 	if (CriticalMultiplier > 1.f)
 	{
-		const float criticalCheck = FMath::RandRange(0.01f, 100.f);
-		if (criticalCheck <= CriticalChance)
-		{
-			InDamage *= CriticalMultiplier;
-		}
+		InDamage *= isCritical ? CriticalMultiplier : 1.f;
 	}
 
 	// For every time the random number is below the lucky chance,
@@ -96,9 +94,10 @@ void UGGEffectDamageCalc::Execute_Implementation(const FGameplayEffectCustomExec
 	//	gets lowered by 100%
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
 		DamageStatics().LuckyChanceDef, EvaluationParameters, LuckyChance);
+
+	bool isLucky = false;
 	if (LuckyChance > 0.f)
 	{
-		bool isLucky = false;
 		float LuckyMulti = 1.f;
 		
 		while (FMath::RandRange(0.01f, 100.f) <= LuckyChance)
@@ -108,10 +107,7 @@ void UGGEffectDamageCalc::Execute_Implementation(const FGameplayEffectCustomExec
 			isLucky		 = true;
 		}
 		
-		if (isLucky)
-		{
-			InDamage *= LuckyMulti;
-		}
+		InDamage *= isLucky ? LuckyMulti : 1.f;
 	}
 
 	UE_LOGFMT(LogTemp, Log, "Damage After Modification: {DamageValue}", InDamage);
@@ -119,4 +115,12 @@ void UGGEffectDamageCalc::Execute_Implementation(const FGameplayEffectCustomExec
 		FGameplayModifierEvaluatedData(DamageStatics().InDamageProperty,
 										EGameplayModOp::Additive, InDamage));
 	
+	FGameplayEffectSpec* MutableSpec		= ExecutionParams.GetOwningSpecForPreExecuteMod();
+	FGGGameplayEffectContext* EffectContext = static_cast<FGGGameplayEffectContext*>
+											( MutableSpec->GetContext().Get() );
+	if (EffectContext != nullptr)
+	{
+		EffectContext->SetIsCriticalHit(isCritical);
+		EffectContext->SetIsLuckyHit(isLucky);
+	}
 }

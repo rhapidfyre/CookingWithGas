@@ -86,6 +86,10 @@ void AGGCharacterBase::BeginPlay()
 	// Triggers 'OnOutOfArmorChanged' listeners when the attribute set
 	// broadcasts that "Out of Armor" boolean has toggled true or false
 	AttributeSet->OnOutOfArmor.AddUObject(this, &AGGCharacterBase::OnOutOfArmorChanged);
+	
+	// Triggers 'OnDamageTakenChanged' listeners when the attribute set
+	// Broadcasts that damage has been processed
+	AttributeSet->OnDamageTaken.AddUObject(this, &AGGCharacterBase::OnDamageTakenChanged);
 }
 
 UAbilitySystemComponent* AGGCharacterBase::GetAbilitySystemComponent() const
@@ -209,6 +213,15 @@ void AGGCharacterBase::OnOutOfArmorChanged(AActor* DamageInstigator, AActor* Dam
 	
 	// Calls the blueprint event
 	OnOutOfArmor(DamageInstigator, DamageCauser, DamageSpec, DamageMagnitude);
+}
+
+void AGGCharacterBase::OnDamageTakenChanged(AActor* DamageInstigator, AActor* DamageCauser,
+	const FGameplayTagContainer& DamageTags, float DamageMagnitude, bool isCritical, bool isLucky)
+{
+	OnDamage.Broadcast(DamageTags, DamageMagnitude);
+	
+	//Calls the blueprint event
+	OnDamageTaken(DamageInstigator, DamageCauser, DamageTags, DamageMagnitude, isCritical, isLucky);
 }
 
 void AGGCharacterBase::OnFireAbility(const FInputActionValue& Value)
